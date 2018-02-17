@@ -8,11 +8,6 @@
 #define dc   D2 // GPIO4
 #define rst  D1 // GPIO5
 
-#define XSTART 2
-#define YSTART 3
-#define WIDTH 128
-#define HEIGHT 128
-
 #define K 0x0000 // Black
 #define W 0xFFFF // White
 #define B 0x3F6C // Blue (sky)
@@ -58,7 +53,7 @@ void drawacloud() {
 }
 
 void setup(void) {
-  // Reuse the Adafruit initialization because it is good
+  // Intitialize the LCD
   tft.initR(INITR_144GREENTAB);
 }
 
