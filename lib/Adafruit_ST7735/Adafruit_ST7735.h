@@ -157,16 +157,21 @@ class Adafruit_ST7735 : public Adafruit_GFX {
   void     dummyclock(void);
   */
 
+ protected:
+
+  int8_t  _cs, _dc, _rst, _sid, _sclk;
+  uint8_t colstart, rowstart, xstart, ystart; // some displays need this changed
+
+  void     writecommand(uint8_t c),
+           writedata(uint8_t d);
+
  private:
   uint8_t  tabcolor;
 
   void     spiwrite(uint8_t),
-           writecommand(uint8_t c),
-           writedata(uint8_t d),
            commandList(const uint8_t *addr),
            commonInit(const uint8_t *cmdList);
 //uint8_t  spiread(void);
-
 
   inline void CS_HIGH(void);
   inline void CS_LOW(void);
@@ -174,9 +179,6 @@ class Adafruit_ST7735 : public Adafruit_GFX {
   inline void DC_LOW(void);
 
   boolean  hwSPI;
-
-  int8_t  _cs, _dc, _rst, _sid, _sclk;
-  uint8_t colstart, rowstart, xstart, ystart; // some displays need this changed
 
 #if defined(USE_FAST_IO)
   volatile RwReg  *dataport, *clkport, *csport, *dcport;

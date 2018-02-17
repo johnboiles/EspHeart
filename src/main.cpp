@@ -1,5 +1,4 @@
-#include <Adafruit_ST7735.h>
-#include <SPI.h>
+#include "fast_st3375.h"
 
 // GPIO 0, 2 or 15 control the boot-mode of the ESP, maybe scary to use those
 // #define sclk D5 // GPIO14 (SPI SCK)
@@ -19,7 +18,7 @@
 #define B 0x3F6C // Blue (sky)
 #define G 0xBE04 // Gray (cloud shadow, alt blue really)
 
-Adafruit_ST7735 tft = Adafruit_ST7735(cs, dc, rst);
+Fast_ST7735 tft = Fast_ST7735(cs, dc, rst);
 
 const uint16_t tile_a[] PROGMEM = {  // Left cloud tile
   B,B,B,B,B,B,B,B,B,K,K,B,B,B,B,B,B,B,B,B,B,B,B,B,
@@ -42,40 +41,6 @@ const uint16_t tile_a[] PROGMEM = {  // Left cloud tile
 uint8_t xoffset = 0;
 uint8_t yoffset = 0;
 
-void writecommand(uint8_t c) {
-  digitalWrite(dc, LOW);
-  digitalWrite(cs, LOW);
-  SPI.transfer(c);
-  digitalWrite(cs, HIGH);
-}
-
-void writedata(uint8_t *buffer, uint32_t size) {
-  digitalWrite(dc, HIGH);
-  digitalWrite(cs, LOW);
-  SPI.writeBytes(buffer, size);
-  digitalWrite(cs, HIGH);
-}
-
-void setAddrWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
-  writecommand(ST7735_CASET);
-  const uint8_t caset[] = {0x00, x0+XSTART, 0x00, x1+XSTART};
-  writedata((uint8_t *)caset, sizeof(caset));
-  writecommand(ST7735_RASET); // Row addr set
-  const uint8_t raset[] = {0x00, y0+YSTART, 0x00, y1+YSTART};
-  writedata((uint8_t *)raset, sizeof(raset));
-  writecommand(ST7735_RAMWR); // write to RAM
-}
-
-void drawBuffer(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t *buffer) {
-  // rudimentary clipping (drawChar w/big text requires this)
-  if((x >= WIDTH) || (y >= HEIGHT)) return;
-  if((x + w - 1) >= WIDTH) w = WIDTH - x;
-  if((y + h - 1) >= HEIGHT) h = HEIGHT - y;
-
-  setAddrWindow(x, y, x+w-1, y+h-1);
-  writedata((uint8_t *)buffer, w*h*2);
-}
-
 void drawacloud() {
   uint16_t *buf = new uint16_t[sizeof(tile_a)];
   if (buf) {
@@ -83,7 +48,7 @@ void drawacloud() {
   }
   for (int x = 0; x < 5; x++) {
     for (int y = 0; y < 8; y++) {
-      drawBuffer(x*24 + xoffset, y*16 + yoffset, 24, 16, buf);
+      tft.drawBuffer(x*24 + xoffset, y*16 + yoffset, 24, 16, buf);
       yield();
     }
   }
