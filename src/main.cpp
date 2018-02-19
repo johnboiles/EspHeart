@@ -166,13 +166,14 @@ void jpegRender(int xpos, int ypos) {
     uint32_t mcu_pixels = win_w * win_h;
 
     // draw image MCU block only if it will fit on the screen
-    if ( ( mcu_x + win_w) <= tft.width() && ( mcu_y + win_h) <= tft.height())
-	{
+    if ( ( mcu_x + win_w) <= tft.width() && ( mcu_y + win_h) <= tft.height()) {
       // Now set a MCU bounding window on the TFT to push pixels into (x, y, x + width - 1, y + height - 1)
       tft.setAddrWindow(mcu_x, mcu_y, mcu_x + win_w - 1, mcu_y + win_h - 1);
 
       // Write all MCU pixels to the TFT window
-      while (mcu_pixels--) tft.pushColor(*pImg++); // Send MCU buffer to TFT 16 bits at a time
+      // while (mcu_pixels--) tft.pushColor(*pImg++); // Send MCU buffer to TFT 16 bits at a time
+      tft.swapendian((uint8_t *)pImg, mcu_pixels*2);
+      tft.writedata((uint8_t *)pImg, mcu_pixels*2);
     }
 
     // Stop drawing blocks if the bottom of the screen has been reached,
@@ -180,6 +181,13 @@ void jpegRender(int xpos, int ypos) {
     else if ( ( mcu_y + win_h) >= tft.height()) JpegDec.abort();
 
   }
+
+    // calculate how long it took to draw the image
+  drawTime = millis() - drawTime;
+
+  // print the results to the serial port
+  Serial.print  ("Total render time was    : "); Serial.print(drawTime); Serial.println(" ms");
+  Serial.println("=====================================");
 }
 
 void drawFSJpeg(const char *filename, int xpos, int ypos) {
@@ -260,7 +268,8 @@ void loop() {
 
 
   // downloadFile(downloadURL.getValue());
-  downloadFile("http://www.gravatar.com/avatar/b26354198c6e8a01b014a81810bafe36?s=128");
+  // downloadFile("http://www.gravatar.com/avatar/b26354198c6e8a01b014a81810bafe36?s=128");
+  downloadFile("http://www.gravatar.com/avatar/71984c1e86b3a6dce833f047d4d000cc?s=128");
 
   drawFSJpeg("/out.jpg", 0, 0);
 

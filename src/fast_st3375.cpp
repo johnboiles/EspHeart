@@ -6,6 +6,14 @@ Fast_ST7735::Fast_ST7735(int8_t cs, int8_t dc, int8_t rst)
 {
 }
 
+void Fast_ST7735::swapendian(uint8_t *buffer, uint32_t size) {
+  for (int i = 0; i < size; i+=2) {
+    uint8_t tmp = buffer[i+1];
+    buffer[i+1] = buffer[i];
+    buffer[i] = tmp;
+  }
+}
+
 void Fast_ST7735::writedata(uint8_t *buffer, uint32_t size) {
   digitalWrite(_dc, HIGH);
   digitalWrite(_cs, LOW);
