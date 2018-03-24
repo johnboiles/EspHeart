@@ -9,14 +9,15 @@
 #include "fast_st3375.h"
 #include <ESP8266HTTPClient.h>
 #include <ESP8266FtpServer.h>
+#include <ArduinoOTA.h>
 
 // GPIO 0, 2 or 15 control the boot-mode of the ESP, maybe scary to use those
 // #define sclk D5 // GPIO14 (SPI SCK)
 // #define mosi D7 // GPIO13 (SPI MOSI)
 // #define cs   D8 // GPIO15 (SPI SS)
-#define cs   D0 // GPIO16
-#define dc   D2 // GPIO4
-#define rst  D1 // GPIO5
+#define cs   16 // GPIO16
+#define dc   5 // GPIO4
+#define rst  4 // GPIO5
 
 #define K 0x0000 // Black
 #define W 0xFFFF // White
@@ -227,10 +228,35 @@ void setup(void) {
   tft.initR(INITR_144GREENTAB);
   SPIFFS.begin();
   // Next lines have to be done ONLY ONCE!!!!!When SPIFFS is formatted ONCE you can comment these lines out!!
-  Serial.println("Please wait 30 secs for SPIFFS to be formatted");
-  SPIFFS.format();
-  Serial.println("Spiffs formatted");
+  // Serial.println("Please wait 30 secs for SPIFFS to be formatted");
+//  SPIFFS.format();
+  // Serial.println("Spiffs formatted");
   ftpSrv.begin("esp8266","esp8266");
+
+   ArduinoOTA.setHostname("esp");
+
+  // No authentication by default
+  // ArduinoOTA.setPassword((const char *)"123");
+
+  ArduinoOTA.onStart([]() {
+    Serial.println("Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r\n", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+
+  ArduinoOTA.begin();
 }
 
 void loop() {
@@ -266,16 +292,23 @@ void loop() {
   tft.setTextSize(2);
   tft.println("Connected!");
 
-
   // downloadFile(downloadURL.getValue());
   // downloadFile("http://www.gravatar.com/avatar/b26354198c6e8a01b014a81810bafe36?s=128");
-  downloadFile("http://www.gravatar.com/avatar/71984c1e86b3a6dce833f047d4d000cc?s=128");
-
-  drawFSJpeg("/out.jpg", 0, 0);
+  // downloadFile("http://www.gravatar.com/avatar/71984c1e86b3a6dce833f047d4d000cc?s=128");
+  // drawBmp();
 
   while(true) {
     // drawacloud();
     yield();
     ftpSrv.handleFTP();
+    ArduinoOTA.handle();
+    for (int i = 0; i <= 27; i++) {
+      yield();
+      ftpSrv .handleFTP();
+      ArduinoOTA.handle();
+      char filename[10];
+      sprintf(filename, "/%d.jpg", i);
+      drawFSJpeg(filename, 0, 0);
+    }
   }
 }
